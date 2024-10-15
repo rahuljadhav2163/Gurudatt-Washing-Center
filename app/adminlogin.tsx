@@ -31,12 +31,13 @@ export default function LoginScreen() {
         mobile: mobile,
         password: password
       });
-      if (response.data.success === true) {
-      } else {
-        Alert.alert('Login Failed', response.data.message || 'Please check your credentials and try again.');
-        await SecureStore.setItemAsync('userData', JSON.stringify(response.data));
+      if (response.data.success) {
+        const userDataToStore = JSON.stringify(response.data.data);
+        await SecureStore.setItemAsync('userData', userDataToStore);
         setUserData(response.data.data);
         router.replace('/entry');
+      } else {
+        Alert.alert('Login Failed', response.data.message || 'Invalid credentials');
       }
     } catch (error) {
       console.error('Login error:', error);
