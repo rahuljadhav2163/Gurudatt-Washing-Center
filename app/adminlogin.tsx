@@ -34,7 +34,7 @@ export default function LoginScreen() {
       if (response.data.success === true) {
       } else {
         Alert.alert('Login Failed', response.data.message || 'Please check your credentials and try again.');
-        await SecureStore.setItemAsync('userData', JSON.stringify(response.data.data));
+        await SecureStore.setItemAsync('userData', JSON.stringify(response.data));
         setUserData(response.data.data);
         router.replace('/entry');
       }
