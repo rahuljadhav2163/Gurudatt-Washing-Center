@@ -27,7 +27,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://192.168.1.9:5000/api/login", {
+      const response = await axios.post("https://washcenter-backend.vercel.app/api/login", {
         mobile: mobile,
         password: password
       });

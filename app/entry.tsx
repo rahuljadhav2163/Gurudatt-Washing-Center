@@ -4,11 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { Calendar } from 'react-native-calendars';
 
 const TaskList = () => {
     const [modalVisible, setModalVisible] = useState(false);
-    const [entries, setEntries] = useState([]); // Ensure this is an array
+    const [entries, setEntries] = useState([]);
+    const [filteredEntries, setFilteredEntries] = useState([]);
     const [userId, setUserId] = useState('');
+    const [selectedDate, setSelectedDate] = useState(formatDateForDisplay(new Date()));
+    const [showCalendar, setShowCalendar] = useState(false);
 
     const [type, setType] = useState('');
     const [number, setNumber] = useState('');
@@ -16,104 +20,241 @@ const TaskList = () => {
     const [price, setPrice] = useState('');
     const [payment, setPayment] = useState('');
 
+    // Format date from ISO string to DD-MM-YYYY
+    function formatDateForDisplay(date) {
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
+    // Format date for Calendar (YYYY-MM-DD)
+    function formatDateForCalendar(dateStr) {
+        const d = new Date(dateStr);
+        return d.toISOString().split('T')[0];
+    }
+
+    // Compare two dates (ignoring time)
+    function isSameDay(date1, date2) {
+        const d1 = new Date(date1);
+        const d2 = new Date(date2);
+        return d1.getDate() === d2.getDate() &&
+               d1.getMonth() === d2.getMonth() &&
+               d1.getFullYear() === d2.getFullYear();
+    }
+
+    useEffect(() => {
+        const initialize = async () => {
+            await getData();
+            await loadVehicles();
+        };
+        initialize();
+    }, []);
+
+    useEffect(() => {
+        if (entries.length > 0) {
+            filterEntriesByDate();
+        }
+    }, [selectedDate, entries]);
+
     const getData = async () => {
         try {
             const storedUserData = await SecureStore.getItemAsync('userData');
             if (storedUserData) {
-                const parsedUserData = JSON.parse(storedUserData); 
+                const parsedUserData = JSON.parse(storedUserData);
                 setUserId(parsedUserData._id);
             }
         } catch (error) {
-            console.error("Error fetching user data", error);
+            console.error("Error fetching user data:", error);
+            Alert.alert("Error", "Failed to load user data");
         }
     };
 
-    useEffect(() => {
-        getData();
-        loadveh(); // Load vehicles after user data is retrieved
-    }, [userId]); // Make sure this runs after `userId` is set
+    const loadVehicles = async () => {
+        try {
+            const storedUserData = await SecureStore.getItemAsync('userData');
+            if (!storedUserData) {
+                Alert.alert("Error", "Please login first");
+                return;
+            }
+
+            const parsedUserData = JSON.parse(storedUserData);
+            const response = await axios.get(
+                `https://washcenter-backend.vercel.app/api/getVehicles/user/${parsedUserData._id}`
+            );
+
+            if (response?.data?.success) {
+                const processedEntries = response.data.data.map(entry => ({
+                    ...entry,
+                    displayDate: formatDateForDisplay(entry.createdAt)
+                }));
+                setEntries(processedEntries);
+            } else {
+                Alert.alert("Error", "Failed to load vehicles");
+            }
+        } catch (error) {
+            console.error("Error loading vehicles:", error);
+            Alert.alert("Error", "Failed to load vehicles");
+        }
+    };
+
+    const filterEntriesByDate = () => {
+        const filtered = entries.filter(entry => 
+            formatDateForDisplay(entry.createdAt) === selectedDate
+        );
+        setFilteredEntries(filtered);
+    };
 
     const addVehicle = async () => {
-        try {
-            const response = await axios.post("http://192.168.1.9:5000/api/addVehicle", {
-                user: userId, 
-                type, price, model, number, payment
-            });
-
-            if (response?.data?.success === true) {
-                Alert.alert(response?.data?.message);
-                setModalVisible(false);
-                loadveh();
-            } else {
-                Alert.alert(response?.data?.message);
-            }
-        } catch (error) {
-            console.log("Error while adding vehicle:", error);
+        if (!type || !number || !model || !price || !payment) {
+            Alert.alert("Error", "Please fill all fields");
+            return;
         }
-    };
-
-    const loadveh = async () => {
-        if (!userId) return;
-
+    
         try {
-            const response = await axios.get(`http://192.168.1.9:5000/api/getVehicles/user/${userId}`);
+            const response = await axios.post(
+                "https://washcenter-backend.vercel.app/api/addVehicle",
+                {
+                    user: userId,
+                    type,
+                    number,
+                    model,
+                    price,
+                    payment
+                }
+            );
+    
             if (response?.data?.success) {
-                setEntries(response.data.data); // Assuming data.data is an array of vehicle objects
+                Alert.alert("Success", "Vehicle added successfully");
+                setModalVisible(false);
+                
+                // Create the new entry
+                const newEntry = {
+                    type,
+                    number,
+                    model,
+                    price,
+                    payment,
+                    createdAt: new Date().toISOString(), // Assuming the vehicle creation is the current date
+                    displayDate: formatDateForDisplay(new Date()) // Format for display
+                };
+    
+                // Prepend the new entry to the existing list
+                setEntries([newEntry, ...entries]);
+    
+                // Clear form
+                setType('');
+                setNumber('');
+                setModel('');
+                setPrice('');
+                setPayment('');
             } else {
-                Alert.alert("Failed to load vehicles");
+                Alert.alert("Error", response?.data?.message || "Failed to add vehicle");
             }
         } catch (error) {
-            console.log("Error loading vehicles:", error);
+            console.error("Error adding vehicle:", error);
+            Alert.alert("Error", "Failed to add vehicle");
         }
     };
+    
 
-    const getCurrentDate = () => {
-        const today = new Date();
-        const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const year = today.getFullYear();
-        return `${day}-${month}-${year}`;
+    const getMarkedDates = () => {
+        const marked = {};
+        entries.forEach(entry => {
+            if (entry.createdAt) {
+                const formattedDate = formatDateForCalendar(entry.createdAt);
+                marked[formattedDate] = {
+                    marked: true,
+                    dotColor: 'black'
+                };
+            }
+        });
+
+        // Mark selected date
+        const selectedDateObj = new Date(selectedDate.split('-').reverse().join('-'));
+        const formattedSelectedDate = formatDateForCalendar(selectedDateObj);
+        marked[formattedSelectedDate] = {
+            ...marked[formattedSelectedDate],
+            selected: true,
+            selectedColor: 'black',
+        };
+
+        return marked;
+    };
+
+    const onDayPress = (day) => {
+        const formattedDate = formatDateForDisplay(new Date(day.dateString));
+        setSelectedDate(formattedDate);
+        setShowCalendar(false);
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Vehicle Data Entry</Text>
-                <Text style={styles.headerDate}>Today's Date: {getCurrentDate()}</Text>
+                <TouchableOpacity 
+                    style={styles.dateSelector}
+                    onPress={() => setShowCalendar(!showCalendar)}
+                >
+                    <Text style={styles.headerDate}>Date: {selectedDate}</Text>
+                    <Icon name="calendar-today" size={24} color="white" style={styles.calendarIcon} />
+                </TouchableOpacity>
             </View>
 
+            {showCalendar && (
+                <View style={styles.calendarContainer}>
+                    <Calendar
+                        markedDates={getMarkedDates()}
+                        onDayPress={onDayPress}
+                        theme={{
+                            todayTextColor: 'black',
+                            selectedDayBackgroundColor: 'black',
+                            selectedDayTextColor: 'white',
+                        }}
+                    />
+                </View>
+            )}
+
             <ScrollView style={styles.scrollView}>
-                {entries.length > 0 ? (
-                    entries.map((entry, index) => (
+                
+                {filteredEntries.length > 0 ? (
+                    filteredEntries.map((entry, index) => (
                         <View key={index} style={styles.card}>
-                            <View style={styles.infoRow}>
-                                <Icon name="two-wheeler" size={20} color="#000" />
-                                <Text style={styles.infoText}>Vehicle Type: {entry.type}</Text>
-                            </View>
+                            <Text style={styles.sdate}>Date : {selectedDate}</Text>
                             <View style={styles.infoRow}>
                                 <Icon name="directions-car" size={20} color="#000" />
-                                <Text style={styles.infoText}>Vehicle No: {entry.number}</Text>
+                                <Text style={styles.infoText}>Type: {entry.type}</Text>
                             </View>
                             <View style={styles.infoRow}>
-                                <Icon name="money" size={20} color="#000" />
-                                <Text style={styles.infoText}>Price: {entry.price}</Text>
+                                <Icon name="tag" size={20} color="#000" />
+                                <Text style={styles.infoText}>Number: {entry.number}</Text>
+                            </View>
+                            <View style={styles.infoRow}>
+                                <Icon name="local-offer" size={20} color="#000" />
+                                <Text style={styles.infoText}>Model: {entry.model}</Text>
+                            </View>
+                            <View style={styles.infoRow}>
+                                <Icon name="attach-money" size={20} color="#000" />
+                                <Text style={styles.infoText}>Price: ₹{entry.price}</Text>
                             </View>
                             <View style={styles.infoRow}>
                                 <Icon name="payment" size={20} color="#000" />
                                 <Text style={styles.infoText}>Payment: {entry.payment}</Text>
                             </View>
-                            <View style={styles.infoRow}>
-                                <Icon name="directions-car" size={20} color="#000" />
-                                <Text style={styles.infoText}>Model: {entry.model}</Text>
-                            </View>
                         </View>
                     ))
                 ) : (
-                    <Text>No entries available</Text>
+                    <View style={styles.noDataContainer}>
+                        <Text style={styles.noDataText}>No entries for {selectedDate}</Text>
+                    </View>
                 )}
             </ScrollView>
 
-            <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
+            <TouchableOpacity 
+                style={styles.addButton}
+                onPress={() => setModalVisible(true)}
+            >
                 <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
 
@@ -125,43 +266,55 @@ const TaskList = () => {
             >
                 <View style={styles.centeredView}>
                     <View style={styles.modalView}>
-                        <Text style={styles.modalTitle}>Add New Entry</Text>
+                        <Text style={styles.modalTitle}>New Entry</Text>
+                        
                         <TextInput
                             style={styles.input}
                             placeholder="Vehicle Type"
                             value={type}
-                            onChangeText={(text) => setType(text)}
+                            onChangeText={setType}
                         />
                         <TextInput
                             style={styles.input}
-                            placeholder="Vehicle No"
+                            placeholder="Vehicle Number"
                             value={number}
-                            onChangeText={(text) => setNumber(text)}
+                            onChangeText={setNumber}
                         />
                         <TextInput
                             style={styles.input}
                             placeholder="Model"
                             value={model}
-                            onChangeText={(text) => setModel(text)}
+                            onChangeText={setModel}
                         />
                         <TextInput
                             style={styles.input}
                             placeholder="Price"
                             value={price}
-                            onChangeText={(text) => setPrice(text)}
+                            keyboardType="numeric"
+                            onChangeText={setPrice}
                         />
                         <TextInput
                             style={styles.input}
-                            placeholder="Payment"
+                            placeholder="Payment Method"
                             value={payment}
-                            onChangeText={(text) => setPayment(text)}
+                            onChangeText={setPayment}
                         />
-                        <TouchableOpacity style={styles.addEntryButton} onPress={addVehicle}>
-                            <Text style={styles.addEntryButtonText}>Add Entry</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                        </TouchableOpacity>
+
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity 
+                                style={styles.addEntryButton}
+                                onPress={addVehicle}
+                            >
+                                <Text style={styles.buttonText}>Add Entry</Text>
+                            </TouchableOpacity>
+                            
+                            <TouchableOpacity 
+                                style={styles.cancelButton}
+                                onPress={() => setModalVisible(false)}
+                            >
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </Modal>
@@ -170,132 +323,154 @@ const TaskList = () => {
 };
 
 const styles = StyleSheet.create({
-    dateHeader: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        backgroundColor: '#e6e6e6',
-        padding: 10,
-        marginTop: 10,
-    },
     container: {
         flex: 1,
         backgroundColor: '#f5f5f5',
     },
+    sdate:{
+        position:"absolute",
+        top:5,
+        right:10
+    },
     header: {
         backgroundColor: 'black',
         padding: 20,
-        marginTop: -28
+        paddingTop: 10,
+        marginTop:-30
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
+        marginBottom: 10,
+    },
+    dateSelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     headerDate: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.8)',
-        marginTop: 5,
+        fontSize: 16,
+        color: 'white',
+    },
+    calendarIcon: {
+        marginLeft: 10,
+    },
+    calendarContainer: {
+        backgroundColor: 'white',
+        margin: 10,
+        borderRadius: 10,
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
     scrollView: {
         flex: 1,
-        backgroundColor: "#cce6ff"
+        backgroundColor: '#f0f0f0',
     },
     card: {
-        backgroundColor: '#f8f8f8',
-        borderRadius: 10,
-        padding: 20,
+        backgroundColor: 'white',
         margin: 10,
-        elevation: 5,
+        padding: 15,
+        borderRadius: 10,
+        elevation: 3,
         shadowColor: '#000',
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        shadowOffset: { width: 1, height: 3 },
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
     },
     infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
-        fontSize: 19,
+        marginBottom: 10,
     },
     infoText: {
         marginLeft: 10,
         fontSize: 16,
-        fontWeight: 'bold',
+    },
+    noDataContainer: {
+        padding: 20,
+        alignItems: 'center',
+    },
+    noDataText: {
+        fontSize: 20,
+        color: '#666',
+        marginTop:210
     },
     addButton: {
         position: 'absolute',
         right: 20,
         bottom: 20,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         backgroundColor: 'black',
         justifyContent: 'center',
         alignItems: 'center',
+        elevation: 5,
     },
     addButtonText: {
-        fontSize: 40,
+        fontSize: 30,
         color: 'white',
     },
     centeredView: {
         flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalView: {
-        width: 370,
-        margin: 20,
-        backgroundColor: "white",
+        width: '90%',
+        backgroundColor: 'white',
         borderRadius: 20,
-        padding: 35,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
+        padding: 20,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 5
     },
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 15,
+        marginBottom: 20,
+        textAlign: 'center',
     },
     input: {
         height: 50,
-        width: 250,
-        borderColor: 'gray',
         borderWidth: 1,
-        borderRadius: 5,
-        marginBottom: 10,
-        paddingHorizontal: 10,
-        fontSize: 20
+        borderColor: '#ddd',
+        borderRadius: 8,
+        paddingHorizontal: 15,
+        marginBottom: 15,
+        fontSize: 16,
     },
-    addEntryButton: {
-        backgroundColor: 'black',
-        borderRadius: 20,
-        padding: 10,
-        marginVertical: 10,
-    },
-    addEntryButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 18,
-    },
-    cancelButton: {
-        backgroundColor: '#ff4d4d',
-        borderRadius: 20,
-        padding: 10,
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         marginTop: 10,
     },
-    cancelButtonText: {
+    addEntryButton: {
+        flex: 1,
+        backgroundColor: 'black',
+        padding: 15,
+        borderRadius: 8,
+        marginRight: 10,
+    },
+    cancelButton: {
+        flex: 1,
+        backgroundColor: '#ff4444',
+        padding: 15,
+        borderRadius: 8,
+        marginLeft: 10,
+    },
+    buttonText: {
         color: 'white',
+        textAlign: 'center',
+        fontSize: 16,
         fontWeight: 'bold',
-        fontSize: 18,
     },
 });
-
 export default TaskList;
