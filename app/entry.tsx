@@ -357,12 +357,10 @@ const TaskList = () => {
                                             {isDeletingVehicle[entry._id] ? (
                                                 <ActivityIndicator size="small" color="red" />
                                             ) : (
-                                                <Text style={styles.deleteText}>Delete</Text>
+                                                <Icon name="delete" size={24} color="white" style={styles.deleteText}/>
                                             )}
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={styles.actionButton}>
-                                            <Text style={styles.editText}>Edit</Text>
-                                        </TouchableOpacity>
+                                        
                                     </View>
                                 </View>
                             )}
@@ -499,7 +497,7 @@ const styles = StyleSheet.create({
     },
     deleteText: {
         color: 'red',
-        fontSize: 14,
+        fontSize: 24,
         fontWeight: '500',
     },
     editText: {
