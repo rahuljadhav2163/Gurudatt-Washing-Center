@@ -16,6 +16,8 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Calendar } from 'react-native-calendars';
 import { Picker } from '@react-native-picker/picker';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 const TaskList = () => {
     const [expandedCards, setExpandedCards] = useState({});
@@ -34,6 +36,7 @@ const TaskList = () => {
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [isAddingVehicle, setIsAddingVehicle] = useState(false);
     const [isDeletingVehicle, setIsDeletingVehicle] = useState({});
+    const [isDownloadingPDF, setIsDownloadingPDF] = useState(false);
     const [vehicleSummary, setVehicleSummary] = useState({
         '2 Wheeler': { count: 0, totalPrice: 0 },
         '3 Wheeler': { count: 0, totalPrice: 0 },
@@ -318,8 +321,141 @@ const TaskList = () => {
         );
     }
 
+    const generatePDF = async () => {
+        const companyName = "Gurudatt Washing Center";
+        const currentDate = new Date().toLocaleDateString();
     
-
+        const summaryHTML = `
+            <h2>Vehicle Summary</h2>
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>Count</th>
+                    <th>Total Price</th>
+                </tr>
+                ${Object.entries(vehicleSummary).map(([type, data]) => `
+                    <tr>
+                        <td>${type}</td>
+                        <td>${data.count}</td>
+                        <td>₹${data.totalPrice.toFixed(2)}</td>
+                    </tr>
+                `).join('')}
+                <tr class="total-row">
+                    <td><strong>Total</strong></td>
+                    <td><strong>${Object.values(vehicleSummary).reduce((acc, curr) => acc + curr.count, 0)}</strong></td>
+                    <td><strong>₹${Object.values(vehicleSummary).reduce((acc, curr) => acc + curr.totalPrice, 0).toFixed(2)}</strong></td>
+                </tr>
+            </table>
+        `;
+    
+        const entriesHTML = `
+            <h2>Vehicle Entries</h2>
+            <table>
+                <tr>
+                    <th>Date</th>
+                    <th>Vehicle No</th>
+                    <th>Type</th>
+                    <th>Model</th>
+                    <th>Price</th>
+                    <th>Payment</th>
+                </tr>
+                ${filteredEntries.map(entry => `
+                    <tr>
+                        <td>${entry.displayDate}</td>
+                        <td>${entry.number.toUpperCase()}</td>
+                        <td>${entry.type}</td>
+                        <td>${entry.model}</td>
+                        <td>₹${parseFloat(entry.price).toFixed(2)}</td>
+                        <td>${entry.payment}</td>
+                    </tr>
+                `).join('')}
+            </table>
+        `;
+    
+        const htmlContent = `
+            <html>
+                <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+                    <style>
+                        body { 
+                            font-family: 'Helvetica', 'Arial', sans-serif; 
+                            padding: 20px; 
+                            color: #333;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 10px;
+                        }
+                        .company-name {
+                            font-size: 24px;
+                            font-weight: bold;
+                            color: #1a5f7a;
+                        }
+                        .report-date {
+                            font-size: 14px;
+                            color: #666;
+                            margin-top: 5px;
+                        }
+                        h2 { 
+                            color: #1a5f7a; 
+                            border-bottom: 1px solid #1a5f7a;
+                            padding-bottom: 5px;
+                        }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 20px; 
+                        }
+                        th, td { 
+                            border: 1px solid #ddd; 
+                            padding: 12px; 
+                            text-align: left; 
+                        }
+                        th { 
+                            background-color: #f2f2f2; 
+                            font-weight: bold;
+                            color: #1a5f7a;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f9f9f9;
+                        }
+                        .total-row {
+                            background-color: #e6f3ff;
+                            font-weight: bold;
+                        }
+                        .page-break {
+                            page-break-after: always;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="company-name">${companyName}</div>
+                        <div class="report-date">Report Generated on: ${currentDate}</div>
+                    </div>
+                    ${summaryHTML}
+                    <div class="page-break"></div>
+                    ${entriesHTML}
+                </body>
+            </html>
+        `;
+    
+        try {
+            const { uri } = await Print.printToFileAsync({
+                html: htmlContent,
+                base64: false
+            });
+    
+            await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    
+            Alert.alert('Success', 'PDF has been generated and shared!');
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            Alert.alert('Error', 'Failed to generate PDF');
+        }
+    };
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
@@ -333,7 +469,7 @@ const TaskList = () => {
                     <Icon name="calendar-today" size={24} color="white" style={styles.calendarIcon} />
                     
                 </TouchableOpacity>
-                <Icon name="download" size={24} color="white" style={styles.dawnload}/>
+                <Icon name="download" size={24} color="white" style={styles.dawnload} onPress={generatePDF}/>
             </View>
 
             <TextInput
@@ -557,8 +693,8 @@ const styles = StyleSheet.create({
     },
     dawnload:{
         position:"absolute",
-        top:81,
-        right:80,
+        top:40,
+        right:17,
         fontSize:29
         },
     cardHeader: {
@@ -700,7 +836,7 @@ const styles = StyleSheet.create({
     noDataText: {
         fontSize: 20,
         color: '#666',
-        marginTop: 210
+        marginTop: 40
     },
     addButton: {
         position: 'absolute',
@@ -775,19 +911,5 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-    sdel: {
-        position: "absolute",
-        right: 5,
-        bottom: 5,
-        color: "red",
-        fontSize: 15
-    },
-    sedit: {
-        position: "absolute",
-        right: 65,
-        bottom: 10,
-        color: "green",
-        fontSize: 15
-    }
 });
 export default TaskList;
