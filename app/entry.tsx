@@ -15,6 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Calendar } from 'react-native-calendars';
+import { Picker } from '@react-native-picker/picker';
 
 const TaskList = () => {
     const [expandedCards, setExpandedCards] = useState({});
@@ -30,11 +31,15 @@ const TaskList = () => {
     const [price, setPrice] = useState('');
     const [payment, setPayment] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-
-    // Loading states
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [isAddingVehicle, setIsAddingVehicle] = useState(false);
     const [isDeletingVehicle, setIsDeletingVehicle] = useState({});
+    const [vehicleSummary, setVehicleSummary] = useState({
+        '2 Wheeler': { count: 0, totalPrice: 0 },
+        '3 Wheeler': { count: 0, totalPrice: 0 },
+        '4 Wheeler': { count: 0, totalPrice: 0 },
+        'Other': { count: 0, totalPrice: 0 },
+    });
 
     function formatDateForDisplay(date) {
         const d = new Date(date);
@@ -138,7 +143,48 @@ const TaskList = () => {
             entry.type.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setFilteredEntries(searched);
+
+        // Calculate summary
+        const summary = {
+            '2 Wheeler': { count: 0, totalPrice: 0 },
+            '3 Wheeler': { count: 0, totalPrice: 0 },
+            '4 Wheeler': { count: 0, totalPrice: 0 },
+            'Other': { count: 0, totalPrice: 0 },
+        };
+
+        searched.forEach(entry => {
+            if (summary[entry.type]) {
+                summary[entry.type].count += 1;
+                summary[entry.type].totalPrice += Number(entry.price);
+            } else {
+                summary['Other'].count += 1;
+                summary['Other'].totalPrice += Number(entry.price);
+            }
+        });
+
+        setVehicleSummary(summary);
     };
+
+    const VehicleSummary = () => (
+        <View style={styles.summaryContainer}>
+            <Text style={styles.summaryTitle}>Vehicle Summary</Text>
+            {Object.entries(vehicleSummary).map(([type, data]) => (
+                <View key={type} style={styles.summaryRow}>
+                    <Text style={styles.summaryText}>{type}: {data.count}</Text>
+                    <Text style={styles.summaryText}>₹{data.totalPrice}</Text>
+                </View>
+            ))}
+            <View style={styles.summaryRow}>
+                <Text style={styles.summaryTotalText}>Total Vehicles: {
+                    Object.values(vehicleSummary).reduce((acc, curr) => acc + curr.count, 0)
+                }</Text>
+                <Text style={styles.summaryTotalText}>Total Price: ₹{
+                    Object.values(vehicleSummary).reduce((acc, curr) => acc + curr.totalPrice, 0)
+                }</Text>
+            </View>
+        </View>
+    );
+
 
     const addVehicle = async () => {
         if (!type || !number || !model || !price || !payment) {
@@ -272,17 +318,22 @@ const TaskList = () => {
         );
     }
 
+    
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Vehicle Data Entry</Text>
+                <Text style={styles.nameofheader}>Vehicle Data Entry</Text>
+                <Text style={styles.headerTitle}>Gurudatt Washing Center</Text>
                 <TouchableOpacity
                     style={styles.dateSelector}
                     onPress={() => setShowCalendar(!showCalendar)}
                 >
                     <Text style={styles.headerDate}>Date: {selectedDate}</Text>
                     <Icon name="calendar-today" size={24} color="white" style={styles.calendarIcon} />
+                    
                 </TouchableOpacity>
+                <Icon name="download" size={24} color="white" style={styles.dawnload}/>
             </View>
 
             <TextInput
@@ -307,6 +358,7 @@ const TaskList = () => {
             )}
 
             <ScrollView style={styles.scrollView}>
+            <VehicleSummary />
                 {filteredEntries.length > 0 ? (
                     filteredEntries.map((entry, index) => (
                         <View key={index} style={styles.card}>
@@ -349,18 +401,10 @@ const TaskList = () => {
                                     </View>
                                     
                                     <View style={styles.cardActions}>
-                                        <TouchableOpacity 
-                                            onPress={() => deleteTransaction(entry._id)}
-                                            disabled={isDeletingVehicle[entry._id]}
-                                            style={styles.actionButton}
-                                        >
-                                            {isDeletingVehicle[entry._id] ? (
-                                                <ActivityIndicator size="small" color="red" />
-                                            ) : (
-                                                <Icon name="delete" size={24} color="white" style={styles.deleteText}/>
-                                            )}
+                                        <TouchableOpacity>
+                                                <Icon name="edit-square" size={24} color="white" style={styles.deleteText}/>
                                         </TouchableOpacity>
-                                        
+                                        <Text style={styles.nameofc}>Gurudatt Washing Center</Text>
                                     </View>
                                 </View>
                             )}
@@ -383,83 +427,140 @@ const TaskList = () => {
             </TouchableOpacity>
 
             <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
+      animationType="slide"
+      transparent={true}
+      visible={modalVisible}
+      onRequestClose={() => setModalVisible(false)}
+    >
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>New Entry</Text>
+
+          {/* Picker for Vehicle Type */}
+         
+
+          <TextInput
+            style={styles.input}
+            placeholder="Vehicle Number"
+            value={number}
+            onChangeText={setNumber}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Model"
+            value={model}
+            onChangeText={setModel}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Price"
+            value={price}
+            keyboardType="numeric"
+            onChangeText={setPrice}
+          />
+ <Picker
+            selectedValue={type}
+            style={styles.input}
+            onValueChange={(itemValue) => setType(itemValue)}
+          >
+            <Picker.Item label="Select vehicle" value="car" />
+            <Picker.Item label="2 Wheeler" value="2 Wheeler" />
+            <Picker.Item label="3 Wheeler" value="3 Wheeler" />
+            <Picker.Item label="4 Wheeler" value="4 Wheeler" />
+            <Picker.Item label="Other" value="Other" />
+          </Picker>
+          {/* Picker for Payment Method */}
+          <Picker
+            selectedValue={payment}
+            style={styles.picker}
+            onValueChange={(itemValue) => setPayment(itemValue)}
+          >
+            <Picker.Item label="Payment Mode" value="car" />
+            <Picker.Item label="Cash" value="cash" />
+            <Picker.Item label="Online" value="online" />
+          </Picker>
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={[
+                styles.addEntryButton,
+                isAddingVehicle && styles.disabledButton
+              ]}
+              onPress={addVehicle}
+              disabled={isAddingVehicle}
             >
-                <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                        <Text style={styles.modalTitle}>New Entry</Text>
+              {isAddingVehicle ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.buttonText}>Add Entry</Text>
+              )}
+            </TouchableOpacity>
 
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Vehicle Type"
-                            value={type}
-                            onChangeText={setType}
-                        />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Vehicle Number"
-                            value={number}
-                            onChangeText={setNumber}
-                        />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Model"
-                            value={model}
-                            onChangeText={setModel}
-                        />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Price"
-                            value={price}
-                            keyboardType="numeric"
-                            onChangeText={setPrice}
-                        />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Payment Method"
-                            value={payment}
-                            onChangeText={setPayment}
-                        />
-
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={[
-                                    styles.addEntryButton,
-                                    isAddingVehicle && styles.disabledButton
-                                ]}
-                                onPress={addVehicle}
-                                disabled={isAddingVehicle}
-                            >
-                                {isAddingVehicle ? (
-                                    <ActivityIndicator size="small" color="white" />
-                                ) : (
-                                    <Text style={styles.buttonText}>Add Entry</Text>
-                                )}
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={[
-                                    styles.cancelButton,
-                                    isAddingVehicle && styles.disabledButton
-                                ]}
-                                onPress={() => setModalVisible(false)}
-                                disabled={isAddingVehicle}
-                            >
-                                <Text style={styles.buttonText}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+            <TouchableOpacity
+              style={[
+                styles.cancelButton,
+                isAddingVehicle && styles.disabledButton
+              ]}
+              onPress={() => setModalVisible(false)}
+              disabled={isAddingVehicle}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    
+    summaryContainer: {
+        backgroundColor: 'white',
+        margin: 10,
+        padding: 15,
+        borderRadius: 10,
+        elevation: 3,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+    },
+    summaryTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    summaryRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 5,
+    },
+    summaryText: {
+        fontSize: 14,
+    },
+    summaryTotalText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    nameofheader:{
+        textAlign:'center',
+        color:"white",
+        marginBottom:10,
+        fontSize:16
+    },
+    nameofc:{
+        position:"absolute",
+        left:0,
+        top:10,
+        color:"#bfbfbf"
+    },
+    dawnload:{
+        position:"absolute",
+        top:81,
+        right:80,
+        fontSize:29
+        },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -496,7 +597,7 @@ const styles = StyleSheet.create({
         marginLeft: 20,
     },
     deleteText: {
-        color: 'red',
+        color: '#00cc00',
         fontSize: 24,
         fontWeight: '500',
     },
@@ -544,7 +645,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
-        marginBottom: 10,
+        marginBottom: 10
     },
     dateSelector: {
         flexDirection: 'row',
