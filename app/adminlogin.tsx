@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Link, router } from 'expo-router';
 import axios from 'axios';
@@ -9,6 +9,9 @@ export default function LoginScreen() {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
   const [userData, setUserData] = useState(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     checkUserData();
@@ -26,6 +29,11 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
+    if(!mobile || !password){
+      Alert.alert('Message', 'Please enter both mobile and password');
+      return;
+    }
+    setIsLoggingIn(true);
     try {
       const response = await axios.post("https://washcenter-backend.vercel.app/api/login", {
         mobile: mobile,
@@ -39,10 +47,11 @@ export default function LoginScreen() {
       } else {
         Alert.alert('Login Failed', response.data.message || 'Invalid credentials');
       }
+      setIsLoggingIn(false);
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Error', 'An error occurred during login. Please try again.');
-    }
+    } 
   };
 
   const handleLogout = async () => {
@@ -57,9 +66,11 @@ export default function LoginScreen() {
         {
           text: "Logout",
           onPress: async () => {
+            setIsLoggingOut(true);
             try {
               await SecureStore.deleteItemAsync('userData');
               setUserData(null);
+              setIsLoggingOut(false);
             } catch (error) {
               console.error('Error logging out:', error);
             }
@@ -70,8 +81,11 @@ export default function LoginScreen() {
     );
   };
 
+  const handleDashboardPress = () => {
+    setIsNavigating(true);
+    router.replace('/entry')
+  };
   const renderProfile = () => {
-
     const getInitials = (name) => {
       if (!name) return '';
       const nameParts = name.split(' ');
@@ -87,15 +101,29 @@ export default function LoginScreen() {
         </View>
         <Text style={styles.profileText}>Welcome, {userData.name}</Text>
         <Text style={styles.profileText}>Mobile: {userData.mobile}</Text>
-       
-        <TouchableOpacity style={styles.logoutButtons} >
-        <Link href='/entry'>
-          <Text style={styles.logoutButtonTexts}>Dashboard</Text>
-          </Link>
+        
+        <TouchableOpacity 
+          style={styles.logoutButtons} 
+          onPress={handleDashboardPress}
+          disabled={isNavigating}
+        >
+          {isNavigating ? (
+            <ActivityIndicator color="black" />
+          ) : (
+            <Text style={styles.logoutButtonTexts}>Dashboard</Text>
+          )}
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Log Out</Text>
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={handleLogout}
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.logoutButtonText}>Log Out</Text>
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -132,8 +160,16 @@ export default function LoginScreen() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Log In</Text>
+      <TouchableOpacity 
+        style={styles.loginButton} 
+        onPress={handleLogin}
+        disabled={isLoggingIn}
+      >
+        {isLoggingIn ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <Text style={styles.loginButtonText}>Log In</Text>
+        )}
       </TouchableOpacity>
 
       <Text style={styles.orText}>Or continue with</Text>
@@ -149,8 +185,8 @@ export default function LoginScreen() {
 
       <View style={styles.signupContainer}>
         <Text style={styles.signupText}>Don't have an account? </Text>
-        <TouchableOpacity >
-         <Link href='/signup'> <Text style={styles.signupLink}>Create now</Text></Link>
+        <TouchableOpacity>
+          <Link href='/signup'><Text style={styles.signupLink}>Create now</Text></Link>
         </TouchableOpacity>
       </View>
     </>
@@ -304,6 +340,7 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     marginTop: 20,
+    textAlign:"center"
   },
   logoutButtonText: {
     color: 'white',
@@ -331,5 +368,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
-

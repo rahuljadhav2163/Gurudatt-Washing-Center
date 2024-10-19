@@ -174,14 +174,15 @@ export default function Index() {
               }
             ]}
           >
-            <TouchableOpacity 
+            <Link 
+            href='/usersignup'
               onPressIn={handlePressIn}
               onPressOut={handlePressOut}
               style={styles.buttonContent}
             >
               <Text style={styles.buttonText}>Get Started</Text>
               <Feather name="arrow-right" size={24} color="white" style={styles.buttonIcon} />
-            </TouchableOpacity>
+            </Link>
           </Animated.View>
         </View>
       </ScrollView>
@@ -194,14 +195,16 @@ export default function Index() {
           <Text style={[styles.bottomBarText, pathname === '/' && styles.activeBottomBarText]}>Home</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity 
+        
+       <TouchableOpacity 
           style={[styles.bottomBarItem, isAdminActive && styles.activeBottomBarItem]}
           onPress={() => setIsAdminActive(!isAdminActive)}
         >
           <Link href='/adminlogin'>
             <Feather name="settings" size={24} color={isAdminActive ? "#FFA500" : "white"} />
-          </Link>
+            </Link>
           <Text style={[styles.bottomBarText, isAdminActive && styles.activeBottomBarText]}>Admin</Text>
+          
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -238,6 +241,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     height: '100%',
+    textAlign:"center"
   },
   container: {
     flex: 1,
