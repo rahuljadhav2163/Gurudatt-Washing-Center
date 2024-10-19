@@ -469,7 +469,7 @@ const TaskList = () => {
                     <Icon name="calendar-today" size={24} color="white" style={styles.calendarIcon} />
                     
                 </TouchableOpacity>
-                <Icon name="download" size={24} color="white" style={styles.dawnload} onPress={generatePDF}/>
+               
             </View>
 
             <TextInput
@@ -537,9 +537,6 @@ const TaskList = () => {
                                     </View>
                                     
                                     <View style={styles.cardActions}>
-                                        <TouchableOpacity>
-                                                <Icon name="edit-square" size={24} color="white" style={styles.deleteText}/>
-                                        </TouchableOpacity>
                                         <Text style={styles.nameofc}>Gurudatt Washing Center</Text>
                                     </View>
                                 </View>
@@ -556,11 +553,17 @@ const TaskList = () => {
             </ScrollView>
 
             <TouchableOpacity
-                style={styles.addButton}
+                style={styles.addButtons}
                 onPress={() => setModalVisible(true)}
             >
-                <Text style={styles.addButtonText}>+</Text>
+                <Text style={styles.addButtonTexts}>+</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.addButton}
+            >
+                <Icon name="download" size={24} color="white" style={styles.dawnload} onPress={generatePDF}/>
+            </TouchableOpacity>
+            
 
             <Modal
       animationType="slide"
@@ -688,13 +691,13 @@ const styles = StyleSheet.create({
     nameofc:{
         position:"absolute",
         left:0,
-        top:10,
-        color:"#bfbfbf"
+        top:0,
+        color:"#bfbfbf",
     },
     dawnload:{
         position:"absolute",
-        top:40,
-        right:17,
+        top:15,
+        right:14,
         fontSize:29
         },
     cardHeader: {
@@ -841,7 +844,7 @@ const styles = StyleSheet.create({
     addButton: {
         position: 'absolute',
         right: 20,
-        bottom: 20,
+        bottom: 10,
         width: 56,
         height: 56,
         borderRadius: 28,
@@ -851,6 +854,22 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     addButtonText: {
+        fontSize: 30,
+        color: 'white',
+    },
+    addButtons: {
+        position: 'absolute',
+        right: 20,
+        bottom: 80,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: 'black',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+    },
+    addButtonTexts: {
         fontSize: 30,
         color: 'white',
     },
