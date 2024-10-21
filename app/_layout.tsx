@@ -10,6 +10,8 @@ export default function RootLayout() {
       <Stack.Screen name="entry" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="usersignup" />
+      <Stack.Screen name="home" />
+      <Stack.Screen name="render" />
     </Stack>
     
     

@@ -13,9 +13,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { Link, usePathname } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-
 const { width, height } = Dimensions.get('window');
-
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 export default function Index() {
@@ -231,7 +229,7 @@ export default function Index() {
           ]}
         >
           <Link
-            href='/userlogin'
+            href='/render'
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
             style={styles.buttonContent}
