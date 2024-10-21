@@ -14,8 +14,10 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { useRouter } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -45,49 +47,57 @@ export default function UserSignup() {
   };
 
   const handleSignup = async () => {
+   // Initialize router for navigation
     setIsLoading(true);
+  
     try {
-      validateInputs();
-
+      validateInputs(); // Ensure inputs are valid before proceeding
+  
       const response = await axios.post(
         "https://washcenter-backend.vercel.app/api/register",
         { mobile, password, name },
-        { timeout: 10000 } // 10 second timeout
+        { timeout: 10000 } // 10-second timeout
       );
-
+  
       if (response.data.success) {
+        // Combine the user data into one object
+        const userData = { mobile, name };
+  
+        // Save user data in SecureStore as a JSON string under one key
+        await SecureStore.setItemAsync('userData', JSON.stringify(userData));
+
         Alert.alert('Success', 'Account created successfully!');
-        setConfirmPassword('')
-        setMobile('')
-        setName('')
-        setPassword('')
+        setConfirmPassword('');
+        setMobile('');
+        setName('');
+        setPassword('');
+        router.replace('/render');
+        // Navigate to the /render page
+         // Replace the current page with /render
       } else {
         throw new Error(response.data.message || 'Failed to create account');
       }
     } catch (error) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
-      
+  
+      // Check if the error is an Axios response error
       if (error.response) {
-        // Server responded with an error
+        // Server responded with an error status code (e.g., 400 or 500)
         errorMessage = error.response.data.message || 'Server error. Please try again.';
       } else if (error.request) {
-        // Request made but no response received
+        // Request was made but no response was received
         errorMessage = 'No response from server. Please check your network connection.';
-      } else if (error.message) {
-        // Custom error messages from validateInputs or other parts of the try block
+      } else {
+        // Other unknown errors or validation errors
         errorMessage = error.message;
       }
-
-      if (axios.isCancel(error)) {
-        errorMessage = 'Request timed out. Please try again.';
-      }
-
+  
+      // Display the error message to the user
       Alert.alert('Error', errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Stop loading spinner
     }
   };
-
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView 
