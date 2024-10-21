@@ -11,16 +11,13 @@ export default function RenderComponent() {
   useEffect(() => {
     const checkSecureStore = async () => {
       try {
-        // Retrieve user data from SecureStore
         const storedUserData = await SecureStore.getItemAsync('userData');
         if (storedUserData) {
-          // Parse and set the user data if present
           setUserData(JSON.parse(storedUserData));
         }
       } catch (error) {
         console.error('Error reading SecureStore:', error);
       } finally {
-        // Stop loading whether data is found or not
         setIsLoading(false);
       }
     };
@@ -29,15 +26,13 @@ export default function RenderComponent() {
   }, []);
 
   if (isLoading) {
-    // Show a loading spinner while checking SecureStore
+
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
-
-  // If user data is found, render Home, else render LoginScreen
   return (
     <View style={{ flex: 1 }}>
       {userData ? <Home /> : <LoginScreen />}
