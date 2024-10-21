@@ -9,105 +9,78 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Link, router } from 'expo-router';
-import axios from 'axios';
+import { Link } from 'expo-router';
+
+const { width, height } = Dimensions.get('window');
 
 export default function UserSignup() {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignup = async () => {
-    if (!name || !mobile || !email || !password || !confirmPassword) {
+    if (!name || !mobile || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-
     setIsLoading(true);
-    try {
-      const response = await axios.post('https://washcenter-backend.vercel.app/api/signup', {
-        name,
-        mobile,
-        email,
-        password,
-      });
-
-      if (response.data.success) {
-        Alert.alert('Success', 'Account created successfully!', [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/adminlogin'),
-          },
-        ]);
-      } else {
-        Alert.alert('Error', response.data.message || 'Signup failed');
-      }
-    } catch (error) {
-      console.error('Signup error:', error);
-      Alert.alert('Error', 'An error occurred during signup. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    console.log('Signup attempted with:', { name, mobile, password });
+    setIsLoading(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header Section */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.mainTitle}>Welcome to Gurudatt</Text>
-          <Text style={styles.subTitle}>Washing Center..!!</Text>
-          <View style={styles.imageContainer}>
-            <MaterialIcons name="local-car-wash" size={30} color="#FFD700" />
-          </View>
-        </View>
-        <View style={styles.formContainer}>
-          <Text style={styles.formTitle}>Create Account</Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.content}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.signupText}>Sign Up</Text>
 
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="person" size={24} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              placeholderTextColor="#999"
-              value={name}
-              onChangeText={setName}
-            />
-          </View>
+          <View style={styles.card}>
+            <Text style={styles.welcomeText}>Welcome to Gurudatt</Text>
+            <Text style={styles.subTitle}>Washing Center..!!</Text>
 
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="phone" size={24} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Mobile Number"
-              placeholderTextColor="#999"
-              keyboardType="phone-pad"
-              value={mobile}
-              onChangeText={setMobile}
-            />
-          </View>
-
-
-          <View style={styles.inputContainer}>
-            <MaterialIcons name="lock" size={24} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#999"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View style={styles.inputContainer}>
+              <InputField
+                icon="person"
+                placeholder="Full Name"
+                value={name}
+                onChangeText={setName}
+              />
+              <InputField
+                icon="phone"
+                placeholder="Mobile Number"
+                value={mobile}
+                onChangeText={setMobile}
+                keyboardType="phone-pad"
+              />
+              <InputField
+                icon="lock"
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+              <InputField
+                icon="lock"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+            </View>
           </View>
 
           <TouchableOpacity
@@ -118,122 +91,146 @@ export default function UserSignup() {
             {isLoading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.signupButtonText}>Sign Up</Text>
+              <>
+                <Text style={styles.signupButtonText}>Sign Up</Text>
+                <MaterialIcons name="arrow-forward" size={20} color="white" style={styles.signupButtonIcon} />
+              </>
             )}
           </TouchableOpacity>
 
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Already have an account? </Text>
-            <Link href="/adminlogin" style={styles.loginLink}>
+            <Link href="/userlogin">
               <Text style={styles.loginLinkText}>Login</Text>
             </Link>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <View style={styles.diagonalBg} />
     </SafeAreaView>
   );
 }
 
+const InputField = ({ icon, ...props }) => (
+  <View style={styles.inputWrapper}>
+    <MaterialIcons name={icon} size={24} color="#666" style={styles.inputIcon} />
+    <TextInput
+      {...props}
+      placeholderTextColor="#999"
+      style={styles.input}
+    />
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#3399ff', 
+    backgroundColor: '#4834D4',
+  },
+  content: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
+    justifyContent: 'center',
   },
-  headerContainer: {
-    alignItems: 'center',
-    marginTop: -10,
+  signupText: {
+    color: 'white',
+    fontSize: 32,
+    fontWeight: 'bold',
     marginBottom: 30,
   },
-  mainTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffcc00', 
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
-  },
-  subTitle: {
-    fontSize: 24,
-    color: '#FFD700',
-    marginTop: 5,
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 4,
-  },
-  imageContainer: {
-    fontSize:12,
-    marginTop: 10,
-    padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 75,
-  },
-  formContainer: {
+  card: {
     backgroundColor: 'white',
     borderRadius: 20,
-    padding: 20,
+    padding: 24,
+    width: '100%',
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    marginTop:-15
   },
-  formTitle: {
+  welcomeText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#333',
     textAlign: 'center',
-    marginBottom: 20,
+  },
+  subTitle: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
   },
   inputContainer: {
+    gap: 16,
+    marginBottom: 16,
+  },
+  inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f8f8',
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 8,
   },
   inputIcon: {
     marginRight: 10,
   },
   input: {
     flex: 1,
-    paddingVertical: 15,
     fontSize: 16,
     color: '#333',
+    paddingVertical: 8,
   },
   signupButton: {
-    backgroundColor: '#FFA500', // Orange color matching the Get Started button
-    borderRadius: 25,
-    padding: 15,
+    backgroundColor: '#4834D4',
+    borderRadius: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   signupButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    marginRight: 8,
+  },
+  signupButtonIcon: {
+    marginLeft: 8,
   },
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
   },
   loginText: {
-    color: '#666',
-    fontSize: 16,
-  },
-  loginLink: {
-    padding: 5,
+    color: 'white',
+    fontSize: 14,
   },
   loginLinkText: {
-    color: '#4B9CD3',
-    fontSize: 16,
+    color: 'white',
+    fontSize: 14,
     fontWeight: 'bold',
+  },
+  diagonalBg: {
+    position: 'absolute',
+    width: width * 2,
+    height: height * 1.5,
+    backgroundColor: '#6C5CE7',
+    transform: [{ rotate: '15deg' }],
+    top: height * 0.35,
+    left: -width * 0.5,
+    zIndex: -1,
   },
 });
