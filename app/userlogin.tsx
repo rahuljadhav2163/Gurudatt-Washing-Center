@@ -1,4 +1,3 @@
-import { Link } from 'expo-router';
 import React, { useState } from 'react';
 import {
   View,
@@ -7,42 +6,85 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  StatusBar,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
+import * as SecureStore from 'expo-secure-store';
+import { Link, useRouter } from 'expo-router';
+import axios from 'axios';
 
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = () => {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false); 
+  const router = useRouter();
 
-  const handleLogin = () => {
-    // Implement login logic here
-    console.log('Login attempted with:', phoneNumber, password);
-  };
+  const handleLogin = async () => {
+    if (!mobile || !password) {
+        Alert.alert('Message', 'Please enter both mobile and password');
+        return;
+    }
+
+    setIsLoggingIn(true); 
+
+    try {
+        const response = await axios.post("https://washcenter-backend.vercel.app/api/login", {
+            mobile: mobile,
+            password: password,
+        });
+
+        if (response.data.success) {
+            const userDataToStore = JSON.stringify(response.data.data);
+            await SecureStore.setItemAsync('userData', userDataToStore);
+            Alert.alert('Login Successful', 'You are now logged in.');
+            router.replace('/render'); 
+        } else {
+            Alert.alert('Login Failed', response.data.message || 'Invalid credentials');
+        }
+    } catch (error) {
+        let errorMessage = 'An error occurred during login. Please try again.';
+        
+        // Check if error is due to a response from the server
+        if (error.response) {
+            // Server responded with a status outside the 2xx range
+            errorMessage = error.response.data.message || 'Server error. Please try again.';
+        } else if (error.request) {
+            // Request made but no response received
+            errorMessage = 'No response from server. Please check your network connection.';
+        } else {
+            // Something else happened
+            errorMessage = error.message;
+        }
+
+        Alert.alert('Error', errorMessage);
+    } finally {
+        setIsLoggingIn(false); 
+    }
+};
 
   return (
     <SafeAreaView style={styles.container}>
-  
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.content}
       >
         <Text style={styles.loginText}>Login</Text>
 
         <View style={styles.card}>
-          <Text style={styles.helloText}>Welcome back</Text>
+          <Text style={styles.helloText}>Welcome back..!!</Text>
 
           <View style={styles.inputContainer}>
             <InputField
               icon="phone"
               placeholder="Mobile Number"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
+              value={mobile}
+              onChangeText={setMobile}
               keyboardType="phone-pad"
             />
             <InputField
@@ -59,20 +101,25 @@ const LoginScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
-          <Icon name="arrow-right" size={20} color="white" style={styles.loginButtonIcon} />
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={isLoggingIn}>
+          {isLoggingIn ? (
+            <ActivityIndicator size="small" color="white" style={styles.loginButtonIcon} />
+          ) : (
+            <>
+              <Text style={styles.loginButtonText}>Login</Text>
+              <Icon name="arrow-right" size={20} color="white" style={styles.loginButtonIcon} />
+            </>
+          )}
         </TouchableOpacity>
 
         <View style={styles.signupContainer}>
           <Text style={styles.newUserText}>New User? </Text>
           
           <TouchableOpacity>
-          <Link href="/usersignup">
-           <Text style={styles.signupText}> Sign Up</Text>
-           </Link>
+            <Link href="/usersignup">
+              <Text style={styles.signupText}>Sign Up</Text>
+            </Link>
           </TouchableOpacity>
-         
         </View>
       </KeyboardAvoidingView>
 

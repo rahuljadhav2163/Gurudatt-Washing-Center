@@ -47,23 +47,19 @@ export default function UserSignup() {
   };
 
   const handleSignup = async () => {
-   // Initialize router for navigation
     setIsLoading(true);
   
     try {
-      validateInputs(); // Ensure inputs are valid before proceeding
+      validateInputs(); 
   
       const response = await axios.post(
         "https://washcenter-backend.vercel.app/api/register",
         { mobile, password, name },
-        { timeout: 10000 } // 10-second timeout
+        { timeout: 10000 } 
       );
   
       if (response.data.success) {
-        // Combine the user data into one object
         const userData = { mobile, name };
-  
-        // Save user data in SecureStore as a JSON string under one key
         await SecureStore.setItemAsync('userData', JSON.stringify(userData));
 
         Alert.alert('Success', 'Account created successfully!');
@@ -72,30 +68,21 @@ export default function UserSignup() {
         setName('');
         setPassword('');
         router.replace('/render');
-        // Navigate to the /render page
-         // Replace the current page with /render
       } else {
         throw new Error(response.data.message || 'Failed to create account');
       }
     } catch (error) {
       let errorMessage = 'An unexpected error occurred. Please try again.';
-  
-      // Check if the error is an Axios response error
       if (error.response) {
-        // Server responded with an error status code (e.g., 400 or 500)
         errorMessage = error.response.data.message || 'Server error. Please try again.';
       } else if (error.request) {
-        // Request was made but no response was received
         errorMessage = 'No response from server. Please check your network connection.';
       } else {
-        // Other unknown errors or validation errors
         errorMessage = error.message;
       }
-  
-      // Display the error message to the user
       Alert.alert('Error', errorMessage);
     } finally {
-      setIsLoading(false); // Stop loading spinner
+      setIsLoading(false);
     }
   };
   return (
