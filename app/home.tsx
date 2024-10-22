@@ -19,8 +19,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
+
+
 
 const ProfileModal = ({ visible, onClose, profileData, isLoading, error }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -246,6 +249,125 @@ const ProfileField = ({
   </View>
 );
 
+const PackageCard = ({ title, price, features, onPress }) => (
+  <TouchableOpacity style={styles.packageCard} onPress={onPress}>
+    <LinearGradient
+      colors={['#6B5AE0', '#5742D7']}
+      style={styles.packageGradient}
+    >
+      <Text style={styles.packageTitle}>{title}</Text>
+      <Text style={styles.packagePrice}>₹{price}</Text>
+      <View style={styles.featuresContainer}>
+        {features.map((feature, index) => (
+          <View key={index} style={styles.featureItem}>
+            <Ionicons name="checkmark-circle" size={16} color="#FFB800" />
+            <Text style={styles.featureText}>{feature}</Text>
+          </View>
+        ))}
+      </View>
+      <TouchableOpacity style={styles.selectButton}>
+        <Text style={styles.selectButtonText}>Select Package</Text>
+      </TouchableOpacity>
+    </LinearGradient>
+  </TouchableOpacity>
+);
+
+const carPackages = [
+  {
+    id: '1',
+    title: 'Basic Wash',
+    price: '299',
+    features: [
+      'Exterior Washing',
+      'Interior Vacuum',
+      'Tire Cleaning',
+      'Window Cleaning'
+    ]
+  },
+  {
+    id: '2',
+    title: 'Premium Wash',
+    price: '599',
+    features: [
+      'Basic Wash Features',
+      'Interior Detailing',
+      'Wax Protection',
+      'Dashboard Polish'
+    ]
+  },
+  {
+    id: '3',
+    title: 'Ultimate Detail',
+    price: '999',
+    features: [
+      'Premium Wash Features',
+      'Paint Protection',
+      'Leather Treatment',
+      'Engine Bay Cleaning'
+    ]
+  }
+];
+const otherPackages = [
+  {
+    id: '1',
+    title: 'Bus Wash',
+    price: '1499',
+    features: [
+      'Exterior Washing',
+      'Interior Cleaning',
+      'Window Cleaning',
+      'Floor Mopping'
+    ]
+  },
+  {
+    id: '2',
+    title: 'Truck Wash',
+    price: '1999',
+    features: [
+      'Exterior Washing',
+      'Chassis Cleaning',
+      'Tire Cleaning',
+      'Cargo Area Wash'
+    ]
+  },
+  {
+    id: '3',
+    title: 'Heavy Vehicle',
+    price: '2499',
+    features: [
+      'Complete Exterior Wash',
+      'Underbody Cleaning',
+      'Engine Degreasing',
+      'Interior Detailing'
+    ]
+  }
+];
+
+const bikePackages = [
+  {
+    id: '1',
+    title: 'Quick Wash',
+    price: '149',
+    features: [
+      'Exterior Washing',
+      'Chain Lubrication',
+      'Basic Polish'
+    ]
+  },
+  {
+    id: '2',
+    title: 'Deep Clean',
+    price: '299',
+    features: [
+      'Quick Wash Features',
+      'Detailed Polish',
+      'Engine Degreasing',
+      'Rust Protection'
+    ]
+  }
+];
+
+
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState('1');
@@ -254,8 +376,67 @@ export default function Home() {
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isLogoutVisible, setIsLogoutVisible] = useState(false);
   const slideAnimation = new Animated.Value(0);
 
+  const renderPackages = () => {
+    const packages = selectedCategory === '1' ? carPackages : 
+                    selectedCategory === '2' ? bikePackages :
+                    selectedCategory === '3' ? otherPackages : 
+                    [];
+    
+    if (packages.length === 0) return null;
+ 
+    return (
+      <View style={styles.packagesSection}>
+        <Text style={styles.sectionTitle}>Available Packages</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.packagesScrollView}
+        >
+          {packages.map((pkg) => (
+            <PackageCard
+              key={pkg.id}
+              title={pkg.title}
+              price={pkg.price}
+              features={pkg.features}
+              onPress={() => Alert.alert('Package Selected', `You selected the ${pkg.title} package.`)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout Confirmation',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              await SecureStore.deleteItemAsync('userData');
+              setIsLogoutVisible(false);
+              // Navigate to login screen or handle logout as needed
+              router.replace('/userlogin'); // Assuming you have a Login screen
+            } catch (error) {
+              console.error('Error logging out:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
   const fetchProfileData = async () => {
     try {
       setIsLoading(true);
@@ -302,7 +483,7 @@ export default function Home() {
       id: '1',
       title: '30% Off',
       subtitle: 'Car Wash',
-      description: 'Valid until July 30',
+      description: 'Special Offers',
       image: 'http://shop.gardenstatehonda.com/wp-content/uploads/sites/21/2020/05/car-wash-2.jpg', // Replace with actual image URL
     },
     {
@@ -349,27 +530,32 @@ export default function Home() {
   return (
     <>
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <StatusBar barStyle="light-content" backgroundColor="#5742D7" />
-      <View style={styles.header}>
-        <View style={styles.locationContainer}>
-          <View style={styles.locationIconContainer}>
-            <LinearGradient
-              colors={['#6B5AE0', '#5742D7']}
-              style={styles.locationIconGradient}
+        <StatusBar backgroundColor="#6B5AE0" />
+        <View style={styles.header}>
+          <View style={styles.locationContainer}>
+            <View style={styles.locationIconContainer}>
+              <LinearGradient
+                colors={['#5742D7', '#5742D7']}
+                style={styles.locationIconGradient}
+              >
+                <Ionicons name="location" size={20} color="#FFB800" />
+              </LinearGradient>
+            </View>
+            <View style={styles.locationTextContainer}>
+              <Text style={styles.locationTitle}>Gurudatt Washing Center</Text>
+              <Text style={styles.locationSubtitle}>18, Narhegaon, Pune</Text>
+            </View>
+              {profileButton}
+            <TouchableOpacity 
+              style={styles.dropdownIcon}
+              onPress={() => setIsLogoutVisible(true)}
             >
-              <Ionicons name="location" size={20} color="#FFB800" />
-            </LinearGradient>
+              <Text onPress={handleLogout}>
+              <Ionicons name="arrow-forward-circle" size={35} color="#ff4d4d" />
+              </Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.locationTextContainer}>
-            <Text style={styles.locationTitle}>Gurudatt Washing Center</Text>
-            <Text style={styles.locationSubtitle}>18, Narhegaon, Pune</Text>
-          </View>
-          <TouchableOpacity style={styles.dropdownIcon}>
-            <Ionicons name="chevron-down" size={20} color="#FFB800" />
-          </TouchableOpacity>
         </View>
-        {profileButton}
-      </View>
 
       <View style={styles.sliderContainer}>
         <Animated.View 
@@ -455,6 +641,7 @@ export default function Home() {
           ))}
         </View>
       </View>
+      {renderPackages()}
       <ProfileModal
     visible={isProfileVisible}
     onClose={() => setIsProfileVisible(false)}
@@ -462,12 +649,73 @@ export default function Home() {
     isLoading={isLoading}
     error={error}
   />
+  
     </ScrollView>
      </>
   );
 }
 
 const styles = StyleSheet.create({
+  packagesSection: {
+    paddingTop: 10,
+    paddingBottom: 2,
+  },
+  packagesScrollView: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  packageCard: {
+    width: 280,
+    marginRight: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  packageGradient: {
+    padding: 16,
+    height: 280,
+  },
+  packageTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFB800',
+    marginBottom: 8,
+  },
+  packagePrice: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  featuresContainer: {
+    flex: 1,
+    gap: 8,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  featureText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  selectButton: {
+    backgroundColor: '#FFB800',
+    padding: 12,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  selectButtonText: {
+    color: '#5742D7',
+    fontSize: 16,
+    fontWeight: '600',
+  },
    modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -625,7 +873,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'ios' ? 50 : 56,
     paddingBottom: 10,
-    backgroundColor: '#5742D7',
+    backgroundColor: '#6B5AE0',
+    
   },
   locationContainer: {
     flexDirection: 'row',
@@ -656,7 +905,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   profileButton: {
-    marginLeft: 16,
+    marginRight: 10,
   },
   profileGradient: {
     width: 36,
@@ -668,7 +917,7 @@ const styles = StyleSheet.create({
   sliderContainer: {
     height: 210,
     overflow: 'hidden',
-    
+    marginTop:10
   },
   slidesWrapper: {
     flexDirection: 'row',
@@ -744,7 +993,7 @@ const styles = StyleSheet.create({
     width: 18,
   },
   categoriesSection: {
-    paddingTop: 24,
+    paddingTop: 8,
   },
   sectionTitle: {
     fontSize: 18,
