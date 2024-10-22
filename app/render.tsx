@@ -21,7 +21,6 @@ export default function RenderComponent() {
         setIsLoading(false);
       }
     };
-
     checkSecureStore();
   }, []);
 

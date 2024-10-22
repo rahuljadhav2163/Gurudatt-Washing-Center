@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width, height } = Dimensions.get('window');
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
+
 export default function Index() {
   const [isAdminActive, setIsAdminActive] = useState(false);
   const pathname = usePathname();

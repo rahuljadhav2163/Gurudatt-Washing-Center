@@ -41,7 +41,7 @@ export default function UserSignup() {
     if (password !== confirmPassword) {
       throw new Error('Passwords do not match');
     }
-    if (password.length < 6) {
+    if (password.length < 5) {
       throw new Error('Password must be at least 6 characters long');
     }
   };
@@ -53,7 +53,7 @@ export default function UserSignup() {
       validateInputs(); 
   
       const response = await axios.post(
-        "https://washcenter-backend.vercel.app/api/register",
+        "https://washcenter-backend.vercel.app/api/signup",
         { mobile, password, name },
         { timeout: 10000 } 
       );

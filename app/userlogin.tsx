@@ -30,15 +30,12 @@ const LoginScreen = () => {
         Alert.alert('Message', 'Please enter both mobile and password');
         return;
     }
-
     setIsLoggingIn(true); 
-
     try {
-        const response = await axios.post("https://washcenter-backend.vercel.app/api/login", {
+        const response = await axios.post("https://washcenter-backend.vercel.app/api/signin", {
             mobile: mobile,
             password: password,
         });
-
         if (response.data.success) {
             const userDataToStore = JSON.stringify(response.data.data);
             await SecureStore.setItemAsync('userData', userDataToStore);
@@ -49,19 +46,15 @@ const LoginScreen = () => {
         }
     } catch (error) {
         let errorMessage = 'An error occurred during login. Please try again.';
-        
-        // Check if error is due to a response from the server
+       
         if (error.response) {
-            // Server responded with a status outside the 2xx range
+       
             errorMessage = error.response.data.message || 'Server error. Please try again.';
         } else if (error.request) {
-            // Request made but no response received
             errorMessage = 'No response from server. Please check your network connection.';
         } else {
-            // Something else happened
             errorMessage = error.message;
         }
-
         Alert.alert('Error', errorMessage);
     } finally {
         setIsLoggingIn(false); 
