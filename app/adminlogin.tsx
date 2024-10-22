@@ -45,12 +45,14 @@ export default function LoginScreen() {
         setUserData(response.data.data);
         router.replace('/entry');
       } else {
-        Alert.alert('Login Failed', response.data.message || 'Invalid credentials');
+        Alert.alert('Login Failed'  , 'Invalid credentials');
+        setIsLoggingIn(false);
       }
       setIsLoggingIn(false);
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Error', 'An error occurred during login. Please try again.');
+      setIsLoggingIn(false);
     } 
   };
 

@@ -419,8 +419,7 @@ export default function Home() {
             try {
               await SecureStore.deleteItemAsync('userprofile');
               setIsLogoutVisible(false);
-              // Navigate to login screen or handle logout as needed
-              router.replace('/userlogin'); // Assuming you have a Login screen
+              router.replace('/userlogin');
             } catch (error) {
               console.error('Error logging out:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');
@@ -826,6 +825,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 20,
+    marginBottom:40
   },
   loadingContainer: {
     padding: 40,
