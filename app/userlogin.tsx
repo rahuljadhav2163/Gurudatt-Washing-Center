@@ -38,7 +38,7 @@ const LoginScreen = () => {
         });
         if (response.data.success) {
             const userDataToStore = JSON.stringify(response.data.data);
-            await SecureStore.setItemAsync('userData', userDataToStore);
+            await SecureStore.setItemAsync('userprofile', userDataToStore);
             Alert.alert('Login Successful', 'You are now logged in.');
             router.replace('/render'); 
         } else {

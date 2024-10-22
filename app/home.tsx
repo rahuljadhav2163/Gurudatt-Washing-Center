@@ -20,7 +20,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
-
 const { width } = Dimensions.get('window');
 
 const ProfileModal = ({ visible, onClose, profileData, isLoading, error }) => {
@@ -35,21 +34,18 @@ const ProfileModal = ({ visible, onClose, profileData, isLoading, error }) => {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-
-      // Validate required fields
+ 
       if (!editedData.name || !editedData.email || !editedData.phone) {
         Alert.alert('Error', 'Name, email, and phone are required fields');
         return;
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(editedData.email)) {
         Alert.alert('Error', 'Please enter a valid email address');
         return;
       }
 
-      // Validate phone format (simple validation)
       const phoneRegex = /^\+?[\d\s-]{10,}$/;
       if (!phoneRegex.test(editedData.phone)) {
         Alert.alert('Error', 'Please enter a valid phone number');
@@ -378,18 +374,18 @@ export default function Home() {
   const slideAnimation = new Animated.Value(0);
 
   const renderPackages = () => {
-    const packages = selectedCategory === '1' ? carPackages :
-      selectedCategory === '2' ? bikePackages :
-        selectedCategory === '3' ? otherPackages :
-          [];
-
+    const packages = selectedCategory === '1' ? carPackages : 
+                    selectedCategory === '2' ? bikePackages :
+                    selectedCategory === '3' ? otherPackages : 
+                    [];
+    
     if (packages.length === 0) return null;
-
+ 
     return (
       <View style={styles.packagesSection}>
         <Text style={styles.sectionTitle}>Available Packages</Text>
-        <ScrollView
-          horizontal
+        <ScrollView 
+          horizontal 
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.packagesScrollView}
         >
@@ -421,7 +417,7 @@ export default function Home() {
           text: 'Yes',
           onPress: async () => {
             try {
-              await SecureStore.deleteItemAsync('userData');
+              await SecureStore.deleteItemAsync('userprofile');
               setIsLogoutVisible(false);
               // Navigate to login screen or handle logout as needed
               router.replace('/userlogin'); // Assuming you have a Login screen
@@ -509,7 +505,7 @@ export default function Home() {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlideIndex((prevIndex) =>
+      setCurrentSlideIndex((prevIndex) => 
         prevIndex === slides.length - 1 ? 0 : prevIndex + 1
       );
     }, 3000);
@@ -527,7 +523,7 @@ export default function Home() {
 
   return (
     <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <StatusBar backgroundColor="#6B5AE0" />
         <View style={styles.header}>
           <View style={styles.locationContainer}>
@@ -543,119 +539,119 @@ export default function Home() {
               <Text style={styles.locationTitle}>Gurudatt Washing Center</Text>
               <Text style={styles.locationSubtitle}>18, Narhegaon, Pune</Text>
             </View>
-            {profileButton}
-            <TouchableOpacity
+              {profileButton}
+            <TouchableOpacity 
               style={styles.dropdownIcon}
               onPress={() => setIsLogoutVisible(true)}
             >
               <Text onPress={handleLogout}>
-                <Ionicons name="arrow-forward-circle" size={35} color="#ff4d4d" />
+              <Ionicons name="arrow-forward-circle" size={35} color="#ff4d4d" />
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.sliderContainer}>
-          <Animated.View
-            style={[
-              styles.slidesWrapper,
-              {
-                transform: [{ translateX: slideAnimation }],
-              },
-            ]}
-          >
-            {slides.map((slide, index) => (
-              <View key={slide.id} style={styles.slide}>
-                <View
-
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.slideGradient}
-                >
-                  <View style={styles.slideContent}>
-                    <View>
-                      <Text style={styles.slideTitle}>{slide.title}</Text>
-                      <Text style={styles.slideSubtitle}>{slide.subtitle}</Text>
-                      <Text style={styles.slideDescription}>{slide.description}</Text>
-                    </View>
-                    <TouchableOpacity style={styles.bookNowButton}>
-                      <Text style={styles.bookNowText}>Book Now</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <Image
-                    source={{ uri: slide.image }}
-                    style={styles.slideImage}
-                    resizeMode="cover"
-                  />
-                </View>
-              </View>
-            ))}
-          </Animated.View>
-          <View style={styles.paginationDots}>
-            {slides.map((_, index) => (
+      <View style={styles.sliderContainer}>
+        <Animated.View 
+          style={[
+            styles.slidesWrapper,
+            {
+              transform: [{ translateX: slideAnimation }],
+            },
+          ]}
+        >
+          {slides.map((slide, index) => (
+            <View key={slide.id} style={styles.slide}>
               <View
-                key={index}
-                style={[
-                  styles.dot,
-                  currentSlideIndex === index && styles.activeDot,
-                ]}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Categories */}
-        <View style={styles.categoriesSection}>
-          <Text style={styles.sectionTitle}>All Categories</Text>
-          <View style={styles.categoriesGrid}>
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryItem,
-                  selectedCategory === category.id && styles.categoryItemActive
-                ]}
-                onPress={() => {
-                  if (category.id === '4') {
-                    router.replace('/services');
-                  } else {
-                    setSelectedCategory(category.id);
-                  }
-                }}
+               
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.slideGradient}
               >
-                <LinearGradient
-                  colors={selectedCategory === category.id ?
-                    ['#6B5AE0', '#5742D7'] :
-                    ['#7B6BE0', '#6B5AE0']}
-                  style={styles.categoryIconContainer}
-                >
-                  <Ionicons
-                    name={category.icon}
-                    size={22}
-                    color={selectedCategory === category.id ? '#FFB800' : '#FFFFFF'}
-                  />
-                </LinearGradient>
-                <Text style={[
-                  styles.categoryText,
-                  selectedCategory === category.id && styles.categoryTextActive
-                ]}>
-                  {category.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                <View style={styles.slideContent}>
+                  <View>
+                    <Text style={styles.slideTitle}>{slide.title}</Text>
+                    <Text style={styles.slideSubtitle}>{slide.subtitle}</Text>
+                    <Text style={styles.slideDescription}>{slide.description}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.bookNowButton}>
+                    <Text style={styles.bookNowText}>Book Now</Text>
+                  </TouchableOpacity>
+                </View>
+                <Image
+                  source={{ uri: slide.image }}
+                  style={styles.slideImage}
+                  resizeMode="cover"
+                />
+              </View>
+            </View>
+          ))}
+        </Animated.View>
+        <View style={styles.paginationDots}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.dot,
+                currentSlideIndex === index && styles.activeDot,
+              ]}
+            />
+          ))}
         </View>
-        {renderPackages()}
-        <ProfileModal
-          visible={isProfileVisible}
-          onClose={() => setIsProfileVisible(false)}
-          profileData={profileData}
-          isLoading={isLoading}
-          error={error}
-        />
+      </View>
 
-      </ScrollView>
-    </>
+      {/* Categories */}
+      <View style={styles.categoriesSection}>
+        <Text style={styles.sectionTitle}>All Categories</Text>
+        <View style={styles.categoriesGrid}>
+        {categories.map((category) => (
+  <TouchableOpacity
+    key={category.id}
+    style={[
+      styles.categoryItem,
+      selectedCategory === category.id && styles.categoryItemActive
+    ]}
+    onPress={() => {
+      if (category.id === '4') { // Services category
+        router.push('/services');
+      } else {
+        setSelectedCategory(category.id);
+      }
+    }}
+  >
+              <LinearGradient
+                colors={selectedCategory === category.id ? 
+                  ['#6B5AE0', '#5742D7'] : 
+                  ['#7B6BE0', '#6B5AE0']}
+                style={styles.categoryIconContainer}
+              >
+                <Ionicons
+                  name={category.icon}
+                  size={22}
+                  color={selectedCategory === category.id ? '#FFB800' : '#FFFFFF'}
+                />
+              </LinearGradient>
+              <Text style={[
+                styles.categoryText,
+                selectedCategory === category.id && styles.categoryTextActive
+              ]}>
+                {category.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      {renderPackages()}
+      <ProfileModal
+    visible={isProfileVisible}
+    onClose={() => setIsProfileVisible(false)}
+    profileData={profileData}
+    isLoading={isLoading}
+    error={error}
+  />
+  
+    </ScrollView>
+     </>
   );
 }
 
@@ -720,7 +716,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  modalOverlay: {
+   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
@@ -863,8 +859,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  dropdownIcon: {
-    color: "white"
+  dropdownIcon:{
+    color:"white"
   },
   container: {
     flex: 1,
@@ -878,7 +874,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 50 : 56,
     paddingBottom: 10,
     backgroundColor: '#6B5AE0',
-
+    
   },
   locationContainer: {
     flexDirection: 'row',
@@ -921,7 +917,7 @@ const styles = StyleSheet.create({
   sliderContainer: {
     height: 210,
     overflow: 'hidden',
-    marginTop: 10
+    marginTop:10
   },
   slidesWrapper: {
     flexDirection: 'row',
@@ -930,7 +926,7 @@ const styles = StyleSheet.create({
   slide: {
     width: width,
     paddingHorizontal: 16,
-
+    
   },
   slideGradient: {
     flex: 1,
@@ -938,13 +934,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     overflow: 'hidden',
     padding: 16,
-    backgroundColor: "#ff8c1a"
-
+    backgroundColor:"#ff8c1a"
+    
   },
   slideContent: {
     flex: 1,
     justifyContent: 'space-between',
-
+    
   },
   slideImage: {
     width: 190,

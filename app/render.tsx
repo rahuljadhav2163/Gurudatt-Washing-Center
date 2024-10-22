@@ -11,7 +11,7 @@ export default function RenderComponent() {
   useEffect(() => {
     const checkSecureStore = async () => {
       try {
-        const storedUserData = await SecureStore.getItemAsync('userData');
+        const storedUserData = await SecureStore.getItemAsync('userprofile');
         if (storedUserData) {
           setUserData(JSON.parse(storedUserData));
         }

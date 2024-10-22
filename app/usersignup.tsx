@@ -60,7 +60,7 @@ export default function UserSignup() {
   
       if (response.data.success) {
         const userData = { mobile, name };
-        await SecureStore.setItemAsync('userData', JSON.stringify(userData));
+        await SecureStore.setItemAsync('userprofile', JSON.stringify(userData));
 
         Alert.alert('Success', 'Account created successfully!');
         setConfirmPassword('');
